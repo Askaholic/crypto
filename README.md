@@ -1,2 +1,2 @@
 # crypto
-Implementations of some common cryptographic alrorithms
+Implementations of some common cryptographic algorithms
