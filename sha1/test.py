@@ -6,14 +6,43 @@
 
 import unittest.main
 from unittest import TestCase
-from sha1 import sha1
+from sha1 import sha1, SHA1
 from binascii import hexlify
+import struct
 
 
 class SHA1TestCase(TestCase):
 
     def test_dummy(self):
         self.assertTrue(True)
+
+    def test_padding_length(self):
+        l = 40
+        m = b'A' * l
+        new_m = SHA1(b'')._pad_message(m)
+        self.assertEqual(m, new_m[:l])
+        self.assertEqual(len(new_m) % 64, 0)
+
+    def test_padding_length_2(self):
+        l = 64
+        m = b'A' * l
+        new_m = SHA1(b'')._pad_message(m)
+        self.assertEqual(m, new_m[:l])
+        self.assertEqual(len(new_m) % 64, 0)
+
+    def test_padding_message_length_field(self):
+        l = 40
+        m = b'A' * l
+        new_m = SHA1(b'')._pad_message(m)
+        self.assertEqual(m, new_m[:l])
+        self.assertEqual(struct.unpack('>Q', new_m[-8:])[0], len(m))
+
+    def test_padding_message_length_field_2(self):
+        l = 0xFFFF
+        m = b'A' * l
+        new_m = SHA1(b'')._pad_message(m)
+        self.assertEqual(m, new_m[:l])
+        self.assertEqual(struct.unpack('>Q', new_m[-8:])[0], len(m))
 
     def test_empty_string(self):
         h = hexlify(sha1(''))
