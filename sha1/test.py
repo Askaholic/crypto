@@ -6,9 +6,10 @@
 
 import unittest.main
 from unittest import TestCase
-from sha1 import sha1, SHA1
+from sha1 import sha1, SHA1, sha1_extend
 from binascii import hexlify
 import struct
+import os
 
 
 class SHA1TestCase(TestCase):
@@ -17,16 +18,24 @@ class SHA1TestCase(TestCase):
         self.assertTrue(True)
 
     def test_empty_string(self):
-        h = hexlify(sha1(''))
+        h = hexlify(sha1(b''))
         self.assertEqual(h, b'da39a3ee5e6b4b0d3255bfef95601890afd80709')
 
     def test_1(self):
-        h = hexlify(sha1('The quick brown fox jumps over the lazy dog'))
+        h = hexlify(sha1(b'The quick brown fox jumps over the lazy dog'))
         self.assertEqual(h, b'2fd4e1c67a2d28fced849ee1bb76e7391b93eb12')
 
     def test_2(self):
-        h = hexlify(sha1('The quick brown fox jumps over the lazy cog'))
+        h = hexlify(sha1(b'The quick brown fox jumps over the lazy cog'))
         self.assertEqual(h, b'de9f2c7fd25e1b3afad3e85a0bd17d9b100db4b3')
+
+    def test_length_extension(self):
+        secret = os.urandom(10)
+        known_data = b'Don\'t extend me bro!'
+        legit_hash = sha1(secret + known_data)
+
+        (new_hash, extended_message) = sha1_extend(legit_hash, known_data, b' Ha! Get extended bro!', len(secret))
+        self.assertEqual(new_hash, sha1(secret + extended_message))
 
 
 class SHA1InternalsTestCase(TestCase):
@@ -81,6 +90,17 @@ class SHA1InternalsTestCase(TestCase):
     def test_leftrotate(self):
         self.assertEqual(0xfe0154ab, self.sha_obj._leftrotate(0xff00aa55, 1))
 
+    def test_f_1(self):
+        self.assertEqual(0, self.sha_obj._f(11, 0xFFFFFFFF, 0, 0xDEADBEEF))
+
+    def test_f_2(self):
+        self.assertEqual(0, self.sha_obj._f(23, 0xBEADF00D, 0x60004EE2, 0xDEADBEEF))
+
+    def test_f_3(self):
+        self.assertEqual(0, self.sha_obj._f(53, 0, 0, 0))
+
+    def test_f_4(self):
+        self.assertEqual(0, self.sha_obj._f(79, 0xBEADF00D, 0xDEADBEEF, 0x60004EE2))
 
 if __name__ == '__main__':
     unittest.main()

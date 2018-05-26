@@ -30,11 +30,9 @@ class SHA1(object):
 
     def digest(self):
         self._initialize_h()
-        message = self._pad_message(self.message)
-        for block in self._blocks_of(message):
-            self._process_block(block)
+        self._compute_hash(self.message)
 
-        return b''.join([struct.pack('>I', h) for h in self.h])
+        return self._get_hash()
 
     def _initialize_h(self):
         self.h = [
@@ -44,6 +42,11 @@ class SHA1(object):
             0x10325476,
             0xC3D2E1F0
         ]
+
+    def _compute_hash(self, message):
+        message = self._pad_message(message)
+        for block in self._blocks_of(message):
+            self._process_block(block)
 
     def _pad_message(self, message):
         length = len(message)
@@ -84,13 +87,13 @@ class SHA1(object):
         assert t >= 0 and t <= 80
 
         if t < 20:
-            return (B & C) | ((~ B) & D)
+            return (B & C) | ((~ B) & D) & 0xFFFFFFFF
         if t < 40:
-            return B ^ C ^ D
+            return B ^ C ^ D & 0xFFFFFFFF
         if t < 60:
-            return (B & C) | (B & D) | (C & D)
+            return (B & C) | (B & D) | (C & D) & 0xFFFFFFFF
         if t < 80:
-            return B ^ C ^ D
+            return B ^ C ^ D & 0xFFFFFFFF
 
     def _update_hash(self, A, B, C, D, E):
         self.h[0] = (self.h[0] + A) & 0xFFFFFFFF
@@ -113,3 +116,6 @@ class SHA1(object):
 
     def _get_K(self, t):
         return SHA1.K[t // 20]
+
+    def _get_hash(self):
+        return b''.join([struct.pack('>I', h) for h in self.h])
