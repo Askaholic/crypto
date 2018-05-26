@@ -46,10 +46,18 @@ class SHA1(object):
 
     def _strxor(self, a, b):
         assert (len(a) == len(b))
-        result = b''
-        for c, d in zip(a, b):
-            result += struct.pack('B', c ^ d)
-        return result
+        return b''.join([struct.pack('B', c ^ d) for c, d in zip(a, b)])
+
+    def _strand(self, a, b):
+        assert (len(a) == len(b))
+        return b''.join([struct.pack('B', c & d) for c, d in zip(a, b)])
+
+    def _stror(self, a, b):
+        assert (len(a) == len(b))
+        return b''.join([struct.pack('B', c | d) for c, d in zip(a, b)])
+
+    def _strnot(self, a):
+        return b''.join([struct.pack('b', ~c) for c in a])
 
 pass
 pass

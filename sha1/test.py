@@ -86,6 +86,29 @@ class SHA1InternalsTestCase(TestCase):
             self.sha_obj._strxor(a, b)
         )
 
+    def test_strand(self):
+        a = b'Hell'
+        b = b'Worl'
+        self.assertEqual(
+            struct.pack('I', struct.unpack('I', a)[0] & struct.unpack('I', b)[0]),
+            self.sha_obj._strand(a, b)
+        )
+
+    def test_stror(self):
+        a = b'Hell'
+        b = b'Worl'
+        self.assertEqual(
+            struct.pack('I', struct.unpack('I', a)[0] | struct.unpack('I', b)[0]),
+            self.sha_obj._stror(a, b)
+        )
+
+    def test_strnot(self):
+        a = b'Hell'
+        self.assertEqual(
+            struct.pack('i', ~ struct.unpack('I', a)[0]),
+            self.sha_obj._strnot(a)
+        )
+
 
 if __name__ == '__main__':
     unittest.main()
