@@ -44,6 +44,13 @@ class SHA1(object):
             yield message[i: i + 64]
             i += 64
 
+    def _strxor(self, a, b):
+        assert (len(a) == len(b))
+        result = b''
+        for c, d in zip(a, b):
+            result += struct.pack('B', c ^ d)
+        return result
+
 pass
 pass
 pass

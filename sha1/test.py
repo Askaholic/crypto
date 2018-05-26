@@ -30,51 +30,61 @@ class SHA1TestCase(TestCase):
 
 
 class SHA1InternalsTestCase(TestCase):
+    def setUp(self):
+        self.sha_obj = SHA1(b'')
+
     def test_padding_length(self):
         l = 40
         m = b'A' * l
-        new_m = SHA1(b'')._pad_message(m)
+        new_m = self.sha_obj._pad_message(m)
         self.assertEqual(m, new_m[:l])
         self.assertEqual(len(new_m) % 64, 0)
 
     def test_padding_length_2(self):
         l = 64
         m = b'A' * l
-        new_m = SHA1(b'')._pad_message(m)
+        new_m = self.sha_obj._pad_message(m)
         self.assertEqual(m, new_m[:l])
         self.assertEqual(len(new_m) % 64, 0)
 
     def test_padding_message_length_field(self):
         l = 40
         m = b'A' * l
-        new_m = SHA1(b'')._pad_message(m)
+        new_m = self.sha_obj._pad_message(m)
         self.assertEqual(m, new_m[:l])
         self.assertEqual(struct.unpack('>Q', new_m[-8:])[0], len(m) * 8)
 
     def test_padding_message_length_field_2(self):
         l = 0xFFFF
         m = b'A' * l
-        new_m = SHA1(b'')._pad_message(m)
+        new_m = self.sha_obj._pad_message(m)
         self.assertEqual(m, new_m[:l])
         self.assertEqual(struct.unpack('>Q', new_m[-8:])[0], len(m) * 8)
 
     def test_padding_1(self):
         m = b'abcde'
-        new_m = SHA1(b'')._pad_message(m)
+        new_m = self.sha_obj._pad_message(m)
         correct_padded_message = b'abcde\x80' + b'\x00' * 57 + b'\x28'
         self.assertEqual(m, new_m[:len(m)])
         self.assertEqual(new_m, correct_padded_message)
 
     def test_blocks_of(self):
-        sha_obj = SHA1(b'')
         message = b''.join([str(chr((i + 0x30) % 0x7f)).encode() for i in range(64 * 10)])
         block_list = []
-        for block in sha_obj._blocks_of(message):
+        for block in self.sha_obj._blocks_of(message):
             with self.subTest(block=block):
                 self.assertEqual(len(block), 64)
             block_list.append(block)
 
         self.assertEqual(message, b''.join(block_list))
+
+    def test_strxor(self):
+        a = b'Hell'
+        b = b'Worl'
+        self.assertEqual(
+            struct.pack('I', struct.unpack('I', a)[0] ^ struct.unpack('I', b)[0]),
+            self.sha_obj._strxor(a, b)
+        )
 
 
 if __name__ == '__main__':
