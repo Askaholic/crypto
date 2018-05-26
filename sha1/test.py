@@ -65,6 +65,17 @@ class SHA1InternalsTestCase(TestCase):
         self.assertEqual(m, new_m[:len(m)])
         self.assertEqual(new_m, correct_padded_message)
 
+    def test_blocks_of(self):
+        sha_obj = SHA1(b'')
+        message = b''.join([str(chr((i + 0x30) % 0x7f)).encode() for i in range(64 * 10)])
+        block_list = []
+        for block in sha_obj._blocks_of(message):
+            with self.subTest(block=block):
+                self.assertEqual(len(block), 64)
+            block_list.append(block)
+
+        self.assertEqual(message, b''.join(block_list))
+
 
 if __name__ == '__main__':
     unittest.main()

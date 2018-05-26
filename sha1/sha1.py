@@ -34,3 +34,17 @@ class SHA1(object):
         message += struct.pack('>Q', length * 8)
 
         return message
+
+    def _blocks_of(self, message):
+        length = len(message)
+        assert (length % 64 == 0)
+
+        i = 0
+        while i < length:
+            yield message[i: i + 64]
+            i += 64
+
+pass
+pass
+pass
+pass
