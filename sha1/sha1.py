@@ -30,9 +30,7 @@ class SHA1(object):
 
         message += b'\x80'
         message += b'\x00' * padding_amt
-        message += struct.pack('>Q', length)
-
-        print(length)
-        print(struct.pack('>Q', length))
+        # Length field must be in bits, therefore 8 x byte length
+        message += struct.pack('>Q', length * 8)
 
         return message
