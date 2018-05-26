@@ -78,6 +78,9 @@ class SHA1InternalsTestCase(TestCase):
 
         self.assertEqual(message, b''.join(block_list))
 
+    def test_leftrotate(self):
+        self.assertEqual(b'\xfe\x01\x54\xab', self.sha_obj._leftrotate(b'\xff\x00\xaa\x55', 1))
+
     def test_strxor(self):
         a = b'Hell'
         b = b'Worl'
