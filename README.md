@@ -16,7 +16,7 @@ My interfaces use Python3 bytes-like objects for both the input parameter and
 the return value. This means if you print the return value straight from the
 hash function, it will not look like the usual string of hex characters. You can
 convert to this format using `binascii.hexlify()`.
-```
+```python
 from binascii import hexlify
 from sha1 import sha1
 
