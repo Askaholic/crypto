@@ -16,6 +16,13 @@ def sha1(message):
 
 
 class SHA1(object):
+    K = [
+        0x5A827999,
+        0x6ED9EBA1,
+        0x8F1BBCDC,
+        0xCA62C1D6
+    ]
+
     def __init__(self, message):
         self.message = message
         if isinstance(message, str):
@@ -26,7 +33,8 @@ class SHA1(object):
         message = self._pad_message(self.message)
         for block in self._blocks_of(message):
             self._process_block(block)
-        return b'\xda9\xa3\xee^kK\r2U\xbf\xef\x95`\x18\x90\xaf\xd8\x07\t'
+
+        return b''.join([struct.pack('>I', h) for h in self.h])
 
     def _initialize_h(self):
         self.h = [
@@ -57,16 +65,39 @@ class SHA1(object):
 
         W = [b''] * 80
         for i in range(16):
-            W[i] = block[i * 4: i * 4 + 4]
+            W[i] = struct.unpack('>I', block[i * 4: i * 4 + 4])[0]
 
         for t in range(16, 80):
-            W[t] = self._leftrotate(
-                self._strxor(W[t-3],
-                self._strxor(W[t-8],
-                self._strxor(W[t-14], W[t-16]
-                ))),
-                1
-            )
+            W[t] = self._leftrotate(W[t-3] ^ W[t-8] ^ W[t-14] ^ W[t-16], 1)
+
+        for t in range(80):
+            temp = 0xFFFFFFFF & (self._leftrotate(A, 5) + self._f(t, B, C, D) + E + W[t] + self._get_K(t))
+            E = D
+            D = C
+            C = self._leftrotate(B, 30)
+            B = A
+            A = temp
+
+        self._update_hash(A, B, C, D, E)
+
+    def _f(self, t, B, C, D):
+        assert t >= 0 and t <= 80
+
+        if t < 20:
+            return (B & C) | ((~ B) & D)
+        if t < 40:
+            return B ^ C ^ D
+        if t < 60:
+            return (B & C) | (B & D) | (C & D)
+        if t < 80:
+            return B ^ C ^ D
+
+    def _update_hash(self, A, B, C, D, E):
+        self.h[0] = (self.h[0] + A) & 0xFFFFFFFF
+        self.h[1] = (self.h[1] + B) & 0xFFFFFFFF
+        self.h[2] = (self.h[2] + C) & 0xFFFFFFFF
+        self.h[3] = (self.h[3] + D) & 0xFFFFFFFF
+        self.h[4] = (self.h[4] + E) & 0xFFFFFFFF
 
     def _blocks_of(self, message):
         length = len(message)
@@ -78,26 +109,7 @@ class SHA1(object):
             i += 64
 
     def _leftrotate(self, a, amt):
-        assert (len(a) == 4)
-        int_val = struct.unpack('I', a)[0]
-        return struct.pack('I', ((int_val << amt) & 0xFFFFFFFF) | (int_val >> (32 - amt)))
+        return ((a << amt) & 0xFFFFFFFF) | (a >> (32 - amt))
 
-    def _strxor(self, a, b):
-        assert (len(a) == len(b))
-        return b''.join([struct.pack('B', c ^ d) for c, d in zip(a, b)])
-
-    def _strand(self, a, b):
-        assert (len(a) == len(b))
-        return b''.join([struct.pack('B', c & d) for c, d in zip(a, b)])
-
-    def _stror(self, a, b):
-        assert (len(a) == len(b))
-        return b''.join([struct.pack('B', c | d) for c, d in zip(a, b)])
-
-    def _strnot(self, a):
-        return b''.join([struct.pack('b', ~c) for c in a])
-
-pass
-pass
-pass
-pass
+    def _get_K(self, t):
+        return SHA1.K[t // 20]
