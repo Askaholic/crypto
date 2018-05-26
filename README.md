@@ -5,11 +5,11 @@ are likely unpolished, bug ridden and extremely slow... So I would not recommend
 using them.
 
 ## Checklist
-[x] SHA1
-[ ] SHA256
-[ ] SHA512
+- [x] SHA1
+- [ ] SHA256
+- [ ] SHA512
 
-[ ] SHA1 Length extension
+- [ ] SHA1 Length extension
 
 # Documentation
 My interfaces use Python3 bytes-like objects for both the input parameter and
