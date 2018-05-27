@@ -16,31 +16,7 @@ def sha1(message):
 
 
 def sha1_extend(digest, known_data, extension, secret_length):
-    original_length = secret_length + len(known_data)
-    padded = SHA1.pad_message(b'*' * original_length)
-    known_padded = known_data + padded[original_length:]
-
-    extended_data = known_padded + extension
-    num_known_blocks = len(padded) // 64
-
-    ###############################
-    # Calculate the extended hash #
-    ###############################
-    sha = SHA1(extended_data)
-
-    # Initialize h to the old hash
-    sha.h = [struct.unpack('>I', digest[i * 4: i * 4 + 4])[0] for i in range(5)]
-    assert sha._get_hash() == digest
-
-    new_message = SHA1.pad_message(b'*' * secret_length + extended_data)
-    for i, block in enumerate(SHA1.blocks_of(new_message)):
-        # skip the blocks which are part of the old message
-        if i < num_known_blocks:
-            continue
-        # Process the new blocks into the old digest
-        sha._process_block(block)
-
-    return (sha._get_hash(), extended_data)
+    return SHA1Extender(digest, known_data, extension, secret_length).extend()
 
 
 class SHA1(object):
@@ -152,3 +128,47 @@ class SHA1(object):
 
     def _get_hash(self):
         return b''.join([struct.pack('>I', h) for h in self.h])
+
+
+class SHA1Extender(object):
+    def __init__(self, digest, known_data, extension, secret_length):
+        self.digest = digest
+        self.known_data = known_data
+        self.extension = extension
+        self.secret_length = secret_length
+
+    def extend(self):
+        extended, num_blocks = self._prepare_new_message()
+        new_digest = self._extend_padded_message(extended, num_blocks)
+
+        return (new_digest, extended)
+
+    def _prepare_new_message(self):
+        original_length = self.secret_length + len(self.known_data)
+        padding, padded_length = self._get_padding_for_message_length(original_length)
+        known_padded = self.known_data + padding
+
+        extended_data = known_padded + self.extension
+        num_known_blocks = padded_length // 64
+        return extended_data, num_known_blocks
+
+    def _get_padding_for_message_length(self, length):
+        padded = SHA1.pad_message(b'*' * length)
+        return padded[length:], len(padded)
+
+    def _extend_padded_message(self, extended_data, num_known_blocks):
+        sha = SHA1(extended_data)
+        # Initialize h to the old hash
+        sha.h = [struct.unpack('>I', self.digest[i*4: (i*4) + 4])[0] for i in range(5)]
+
+        # The value of the secret and old data doesn't matter because we already
+        # have the digest of that data
+        new_message = SHA1.pad_message(b'*' * self.secret_length + extended_data)
+        for i, block in enumerate(SHA1.blocks_of(new_message)):
+            # skip the blocks which are part of the old message
+            if i < num_known_blocks:
+                continue
+            # Process the new blocks into the old digest
+            sha._process_block(block)
+
+        return sha._get_hash()
