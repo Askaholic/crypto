@@ -15,6 +15,34 @@ def sha1(message):
     return SHA1(message).digest()
 
 
+def sha1_extend(digest, known_data, extension, secret_length):
+    original_length = secret_length + len(known_data)
+    padded = SHA1.pad_message(b'*' * original_length)
+    known_padded = known_data + padded[original_length:]
+
+    extended_data = known_padded + extension
+    num_known_blocks = len(padded) // 64
+
+    ###############################
+    # Calculate the extended hash #
+    ###############################
+    sha = SHA1(extended_data)
+
+    # Initialize h to the old hash
+    sha.h = [struct.unpack('>I', digest[i * 4: i * 4 + 4])[0] for i in range(5)]
+    assert sha._get_hash() == digest
+
+    new_message = SHA1.pad_message(b'*' * secret_length + extended_data)
+    for i, block in enumerate(SHA1.blocks_of(new_message)):
+        # skip the blocks which are part of the old message
+        if i < num_known_blocks:
+            continue
+        # Process the new blocks into the old digest
+        sha._process_block(block)
+
+    return (sha._get_hash(), extended_data)
+
+
 class SHA1(object):
     K = [
         0x5A827999,
@@ -44,11 +72,12 @@ class SHA1(object):
         ]
 
     def _compute_hash(self, message):
-        message = self._pad_message(message)
-        for block in self._blocks_of(message):
+        message = SHA1.pad_message(message)
+        for block in SHA1.blocks_of(message):
             self._process_block(block)
 
-    def _pad_message(self, message):
+    @staticmethod
+    def pad_message(message):
         length = len(message)
         padding_amt = 55 - (length % 64)
 
@@ -71,19 +100,20 @@ class SHA1(object):
             W[i] = struct.unpack('>I', block[i * 4: i * 4 + 4])[0]
 
         for t in range(16, 80):
-            W[t] = self._leftrotate(W[t-3] ^ W[t-8] ^ W[t-14] ^ W[t-16], 1)
+            W[t] = SHA1.leftrotate(W[t-3] ^ W[t-8] ^ W[t-14] ^ W[t-16], 1)
 
         for t in range(80):
-            temp = 0xFFFFFFFF & (self._leftrotate(A, 5) + self._f(t, B, C, D) + E + W[t] + self._get_K(t))
+            temp = 0xFFFFFFFF & (SHA1.leftrotate(A, 5) + SHA1.f(t, B, C, D) + E + W[t] + SHA1.get_K(t))
             E = D
             D = C
-            C = self._leftrotate(B, 30)
+            C = SHA1.leftrotate(B, 30)
             B = A
             A = temp
 
         self._update_hash(A, B, C, D, E)
 
-    def _f(self, t, B, C, D):
+    @staticmethod
+    def f(t, B, C, D):
         assert t >= 0 and t <= 80
 
         if t < 20:
@@ -102,7 +132,8 @@ class SHA1(object):
         self.h[3] = (self.h[3] + D) & 0xFFFFFFFF
         self.h[4] = (self.h[4] + E) & 0xFFFFFFFF
 
-    def _blocks_of(self, message):
+    @staticmethod
+    def blocks_of(message):
         length = len(message)
         assert (length % 64 == 0)
 
@@ -111,10 +142,12 @@ class SHA1(object):
             yield message[i: i + 64]
             i += 64
 
-    def _leftrotate(self, a, amt):
+    @staticmethod
+    def leftrotate(a, amt):
         return ((a << amt) & 0xFFFFFFFF) | (a >> (32 - amt))
 
-    def _get_K(self, t):
+    @staticmethod
+    def get_K(t):
         return SHA1.K[t // 20]
 
     def _get_hash(self):

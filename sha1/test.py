@@ -39,40 +39,37 @@ class SHA1TestCase(TestCase):
 
 
 class SHA1InternalsTestCase(TestCase):
-    def setUp(self):
-        self.sha_obj = SHA1(b'')
-
     def test_padding_length(self):
         l = 40
         m = b'A' * l
-        new_m = self.sha_obj._pad_message(m)
+        new_m = SHA1.pad_message(m)
         self.assertEqual(m, new_m[:l])
         self.assertEqual(len(new_m) % 64, 0)
 
     def test_padding_length_2(self):
         l = 64
         m = b'A' * l
-        new_m = self.sha_obj._pad_message(m)
+        new_m = SHA1.pad_message(m)
         self.assertEqual(m, new_m[:l])
         self.assertEqual(len(new_m) % 64, 0)
 
     def test_padding_message_length_field(self):
         l = 40
         m = b'A' * l
-        new_m = self.sha_obj._pad_message(m)
+        new_m = SHA1.pad_message(m)
         self.assertEqual(m, new_m[:l])
         self.assertEqual(struct.unpack('>Q', new_m[-8:])[0], len(m) * 8)
 
     def test_padding_message_length_field_2(self):
         l = 0xFFFF
         m = b'A' * l
-        new_m = self.sha_obj._pad_message(m)
+        new_m = SHA1.pad_message(m)
         self.assertEqual(m, new_m[:l])
         self.assertEqual(struct.unpack('>Q', new_m[-8:])[0], len(m) * 8)
 
     def test_padding_1(self):
         m = b'abcde'
-        new_m = self.sha_obj._pad_message(m)
+        new_m = SHA1.pad_message(m)
         correct_padded_message = b'abcde\x80' + b'\x00' * 57 + b'\x28'
         self.assertEqual(m, new_m[:len(m)])
         self.assertEqual(new_m, correct_padded_message)
@@ -80,7 +77,7 @@ class SHA1InternalsTestCase(TestCase):
     def test_blocks_of(self):
         message = b''.join([str(chr((i + 0x30) % 0x7f)).encode() for i in range(64 * 10)])
         block_list = []
-        for block in self.sha_obj._blocks_of(message):
+        for block in SHA1.blocks_of(message):
             with self.subTest(block=block):
                 self.assertEqual(len(block), 64)
             block_list.append(block)
@@ -88,19 +85,19 @@ class SHA1InternalsTestCase(TestCase):
         self.assertEqual(message, b''.join(block_list))
 
     def test_leftrotate(self):
-        self.assertEqual(0xfe0154ab, self.sha_obj._leftrotate(0xff00aa55, 1))
+        self.assertEqual(0xfe0154ab, SHA1.leftrotate(0xff00aa55, 1))
 
     def test_f_1(self):
-        self.assertEqual(0, self.sha_obj._f(11, 0xFFFFFFFF, 0, 0xDEADBEEF))
+        self.assertEqual(0, SHA1.f(11, 0xFFFFFFFF, 0, 0xDEADBEEF))
 
     def test_f_2(self):
-        self.assertEqual(0, self.sha_obj._f(23, 0xBEADF00D, 0x60004EE2, 0xDEADBEEF))
+        self.assertEqual(0, SHA1.f(23, 0xBEADF00D, 0x60004EE2, 0xDEADBEEF))
 
     def test_f_3(self):
-        self.assertEqual(0, self.sha_obj._f(53, 0, 0, 0))
+        self.assertEqual(0, SHA1.f(53, 0, 0, 0))
 
     def test_f_4(self):
-        self.assertEqual(0, self.sha_obj._f(79, 0xBEADF00D, 0xDEADBEEF, 0x60004EE2))
+        self.assertEqual(0, SHA1.f(79, 0xBEADF00D, 0xDEADBEEF, 0x60004EE2))
 
 if __name__ == '__main__':
     unittest.main()
