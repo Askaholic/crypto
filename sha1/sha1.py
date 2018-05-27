@@ -150,11 +150,11 @@ class SHA1Extender(object):
 
         extended_data = known_padded + self.extension
         num_known_blocks = padded_length // 64
-        return extended_data, num_known_blocks
+        return (extended_data, num_known_blocks)
 
     def _get_padding_for_message_length(self, length):
         padded = SHA1.pad_message(b'*' * length)
-        return padded[length:], len(padded)
+        return (padded[length:], len(padded))
 
     def _extend_padded_message(self, extended_data, num_known_blocks):
         sha = SHA1(extended_data)

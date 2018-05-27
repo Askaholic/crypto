@@ -34,7 +34,7 @@ class SHA1TestCase(TestCase):
         known_data = b'Don\'t extend me bro!'
         legit_hash = sha1(secret + known_data)
 
-        (new_hash, extended_message) = sha1_extend(legit_hash, known_data, b' Ha! Get extended bro!', len(secret))
+        new_hash, extended_message = sha1_extend(legit_hash, known_data, b' Ha! Get extended bro!', len(secret))
         self.assertEqual(new_hash, sha1(secret + extended_message))
 
     def test_length_extension_2(self):
