@@ -37,6 +37,12 @@ class SHA1TestCase(TestCase):
         (new_hash, extended_message) = sha1_extend(legit_hash, known_data, b' Ha! Get extended bro!', len(secret))
         self.assertEqual(new_hash, sha1(secret + extended_message))
 
+    def test_length_extension_2(self):
+        legit_hash = sha1('')
+
+        (new_hash, extended_message) = sha1_extend(legit_hash, b'', b' Ha! Get extended bro!', 0)
+        self.assertEqual(new_hash, sha1(b'' + extended_message))
+
 
 class SHA1InternalsTestCase(TestCase):
     def test_padding_length(self):
