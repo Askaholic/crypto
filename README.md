@@ -58,10 +58,12 @@ and is not simply a concatenation of the known data and the extension.
 import os
 from sha1 import sha1, sha1_extend
 
+secret = os.urandom(10)
 known_data = b'Don\'t extend me bro!'
-h1 = sha1(os.urandom(10) + known_data)
 
+h1 = sha1(secret + known_data)
 h2, ext = sha1_extend(h1, known_data, b'Totally bro', 10)
+
 h2 == sha1(secret + ext)
 # True
 ```
